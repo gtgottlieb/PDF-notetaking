@@ -20,7 +20,7 @@ def get_template_page(template_path):
     template_page = template_doc.load_page(0)  # Assuming the template is a single page
     return template_doc, template_page
 
-def draw_grid_on_template(template_path, output_path):
+def draw_grid_on_template(template_path, output_path, aspect_ratio):
     doc = fitz.open(template_path)
     page = doc[0]  # Assuming you want to draw on the first page
     w, h = page.rect.width, page.rect.height
@@ -33,7 +33,7 @@ def draw_grid_on_template(template_path, output_path):
     n_squares = 13
 
     add_y_pixels_slide = n_squares * square_length + (n_squares - 0.5) * line_width
-    rect_slide = fitz.Rect(x0, y0, x0 + 4 / 3 * add_y_pixels_slide, y0 + add_y_pixels_slide)
+    rect_slide = fitz.Rect(x0, y0, x0 + aspect_ratio * add_y_pixels_slide, y0 + add_y_pixels_slide)
     page.draw_rect(rect_slide, width=0.01)
 
     doc.save(output_path)
@@ -56,7 +56,6 @@ def embed_slides_on_template(input_folder, output_folder, output_name, template_
 
                     pos = positions[slide_count % slides_per_page]
                     slide = doc.load_page(page_num)
-                    slide_rect = slide.rect
                     target_rect = fitz.Rect(pos[0], pos[1], pos[2], pos[3])
                     writing_rect = fitz.Rect(pos[0], pos[1], template_doc[0].rect.width - pos[0], pos[3])
 
@@ -73,10 +72,22 @@ def embed_slides_on_template(input_folder, output_folder, output_name, template_
     os.startfile(output_pdf_path)
 
 def main():
-    aspect_ratio = 4 / 3
+    """
+    Edit name and aspect ratio. 
+    4 slides per page works well with most landscape aspect ratios.
+    """
     output_name = "output_notes.pdf"
 
-    base_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of main.py
+    aspect_ratio = 4/3    # Default 4/3
+    slides_per_page = 4     # Default 4
+
+    
+    """
+    Only edit if using a custom template:
+
+    Can use the draw_grid_on_template() function if needed
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__)) 
     input_folder = os.path.join(base_dir, "../Input Folder")
     output_folder = os.path.join(base_dir, "../Output Folder")
     template_path = os.path.join(base_dir, "template.pdf")
