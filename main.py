@@ -20,25 +20,6 @@ def get_template_page(template_path):
     template_page = template_doc.load_page(0)  # Assuming the template is a single page
     return template_doc, template_page
 
-def draw_grid_on_template(template_path, output_path, aspect_ratio):
-    doc = fitz.open(template_path)
-    page = doc[0]  # Assuming you want to draw on the first page
-    w, h = page.rect.width, page.rect.height
-
-    # Grid parameters
-    x0 = 17.15
-    y0 = 18.075
-    square_length = 13.85
-    line_width = 0.55
-    n_squares = 13
-
-    add_y_pixels_slide = n_squares * square_length + (n_squares - 0.5) * line_width
-    rect_slide = fitz.Rect(x0, y0, x0 + aspect_ratio * add_y_pixels_slide, y0 + add_y_pixels_slide)
-    page.draw_rect(rect_slide, width=0.01)
-
-    doc.save(output_path)
-    os.startfile(output_path)
-
 def embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, slides_per_page=4):
     output_doc = fitz.open()  # Create a new output document
     template_doc = fitz.open(template_path)  # Load the template document
@@ -70,6 +51,28 @@ def embed_slides_on_template(input_folder, output_folder, output_name, template_
     output_doc.save(output_pdf_path)
     print(f"Compiled notes saved to {output_pdf_path}")
     os.startfile(output_pdf_path)
+
+"""
+For determing positions, debugging, and custom template creation
+"""
+def draw_grid_on_template(template_path, output_path, aspect_ratio):
+    doc = fitz.open(template_path)
+    page = doc[0]  # Assuming you want to draw on the first page
+    w, h = page.rect.width, page.rect.height
+
+    # Grid parameters
+    x0 = 17.15
+    y0 = 18.075
+    square_length = 13.85
+    line_width = 0.55
+    n_squares = 13
+
+    add_y_pixels_slide = n_squares * square_length + (n_squares - 0.5) * line_width
+    rect_slide = fitz.Rect(x0, y0, x0 + aspect_ratio * add_y_pixels_slide, y0 + add_y_pixels_slide)
+    page.draw_rect(rect_slide, width=0.01)
+
+    doc.save(output_path)
+    os.startfile(output_path)
 
 def main():
     """
