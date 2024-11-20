@@ -74,7 +74,7 @@ def embed_slides_on_template(input_folder, output_folder, output_name, template_
 
 def main():
     aspect_ratio = 4 / 3
-    output_name = "Math Methods Week 4 (up to GT2).pdf"
+    output_name = "output_notes.pdf"
 
     base_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of main.py
     input_folder = os.path.join(base_dir, "../Input Folder")
