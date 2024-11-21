@@ -1,5 +1,6 @@
 import fitz
 import os
+import argparse
 
 # Template is 39 x 56
 # 1 (inner) Square is approximately 13.85 x 13.85
@@ -7,7 +8,6 @@ import os
 # Each line is 0.55 wide
 
 def ensure_directories_exist(input_folder, output_folder):
-    """Ensure the existence of Input Folder and Output Folder."""
     if not os.path.exists(input_folder):
         os.makedirs(input_folder)
         print(f"Created directory: {input_folder}")
@@ -52,9 +52,6 @@ def embed_slides_on_template(input_folder, output_folder, output_name, template_
     print(f"Compiled notes saved to {output_pdf_path}")
     os.startfile(output_pdf_path)
 
-"""
-For determing positions, debugging, and custom template creation
-"""
 def draw_grid_on_template(template_path, output_path, aspect_ratio):
     doc = fitz.open(template_path)
     page = doc[0]  # Assuming you want to draw on the first page
@@ -75,22 +72,16 @@ def draw_grid_on_template(template_path, output_path, aspect_ratio):
     os.startfile(output_path)
 
 def main():
-    """
-    Edit name and aspect ratio. 
-    4 slides per page works well with most landscape aspect ratios.
-    """
-    output_name = "output_notes.pdf"
+    parser = argparse.ArgumentParser(description="Embed slides into a custom template.")
+    parser.add_argument("--name", type=str, default="output_notes.pdf", help="Name of the output PDF file (include .pdf extension)")
+    args = parser.parse_args()
 
-    aspect_ratio = 4/3    # Default 4/3
-    slides_per_page = 4     # Default 4
+    output_name = args.name
 
-    
-    """
-    Only edit if using a custom template:
+    aspect_ratio = 4 / 3  # Default 4/3
+    slides_per_page = 4  # Default 4
 
-    Can use the draw_grid_on_template() function if needed
-    """
-    base_dir = os.path.dirname(os.path.abspath(__file__)) 
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     input_folder = os.path.join(base_dir, "../Input Folder")
     output_folder = os.path.join(base_dir, "../Output Folder")
     template_path = os.path.join(base_dir, "template.pdf")
