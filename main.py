@@ -2,10 +2,17 @@ import fitz
 import os
 import argparse
 
-# Template is 39 x 56
-# 1 (inner) Square is approximately 13.85 x 13.85
-# The (inner) starting point is (17.15, 18.075) (x,y)
-# Each line is 0.55 wide
+"""
+Args:
+--name <output_filename.pdf> make sure to include the .pdf extension
+--zoom <zoom_factor> float e.g. 1.13 enlarges/shrinks the slides. Useful if slides have invisible borders
+
+Template is 39 x 56
+1 (inner) Square is approximately 13.85 x 13.85
+The (inner) starting point is (17.15, 18.075) (x,y)
+Each line is 0.55 wide
+"""
+
 
 def ensure_directories_exist(input_folder, output_folder):
     if not os.path.exists(input_folder):
@@ -20,7 +27,8 @@ def get_template_page(template_path):
     template_page = template_doc.load_page(0)  # Assuming the template is a single page
     return template_doc, template_page
 
-def embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, slides_per_page=4):
+def embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, zoom_factor):
+    slides_per_page=4
     output_doc = fitz.open()  # Create a new output document
     template_doc = fitz.open(template_path)  # Load the template document
 
@@ -37,12 +45,28 @@ def embed_slides_on_template(input_folder, output_folder, output_name, template_
 
                     pos = positions[slide_count % slides_per_page]
                     slide = doc.load_page(page_num)
-                    target_rect = fitz.Rect(pos[0], pos[1], pos[2], pos[3])
-                    writing_rect = fitz.Rect(pos[0], pos[1], template_doc[0].rect.width - pos[0], pos[3])
 
-                    output_page.show_pdf_page(target_rect, doc, page_num)
-                    output_page.draw_rect(target_rect, width=0.55)
-                    output_page.draw_rect(writing_rect, width=0.55)
+                    # Compute zoomed rectangle
+                    center_x = (pos[0] + pos[2]) / 2
+                    center_y = (pos[1] + pos[3]) / 2
+                    width = (pos[2] - pos[0])
+                    height = (pos[3] - pos[1])
+                    outline_rect = fitz.Rect(
+                        center_x - width / 2,
+                        center_y - height / 2,
+                        center_x + width / 2,
+                        center_y + height / 2
+                    )
+                    zoomed_rect = fitz.Rect(
+                        center_x - width * zoom_factor / 2,
+                        center_y - height * zoom_factor/ 2,
+                        center_x + width * zoom_factor / 2,
+                        center_y + height * zoom_factor / 2
+                    )
+
+
+                    output_page.show_pdf_page(zoomed_rect, doc, page_num)
+                    output_page.draw_rect(outline_rect, width=0.55)
                     slide_count += 1
 
                 doc.close()
@@ -74,9 +98,12 @@ def draw_grid_on_template(template_path, output_path, aspect_ratio):
 def main():
     parser = argparse.ArgumentParser(description="Embed slides into a custom template.")
     parser.add_argument("--name", type=str, default="output_notes.pdf", help="Name of the output PDF file (include .pdf extension)")
+    parser.add_argument("--zoom", type=float, default=1.0, help="Allows you to magnify slides, useful if slides contain an invisible border. e.g. 1.13")
+
     args = parser.parse_args()
 
     output_name = args.name
+    zoom = args.zoom
 
     aspect_ratio = 4 / 3  # Default 4/3
     slides_per_page = 4  # Default 4
@@ -103,7 +130,7 @@ def main():
                  (x0, y2, x0 + aspect_ratio * add_y_pixels_slide, y2 + add_y_pixels_slide),
                  (x0, y3, x0 + aspect_ratio * add_y_pixels_slide, y3 + add_y_pixels_slide)]
 
-    embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions)
+    embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, zoom)
 
 if __name__ == "__main__":
     main()
