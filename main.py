@@ -27,6 +27,27 @@ def get_template_page(template_path):
     template_page = template_doc.load_page(0)  # Assuming the template is a single page
     return template_doc, template_page
 
+def get_pdf_aspect_ratio(folder_path):
+    pdf_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.pdf')]
+    
+    if not pdf_files:
+        print("No PDF files found in the folder.")
+        return None
+
+    first_pdf = os.path.join(folder_path, pdf_files[0])
+
+    doc = fitz.open(first_pdf)
+    
+    first_page = doc[0]
+    
+    rect = first_page.rect
+    width = rect.width
+    height = rect.height
+    
+    aspect_ratio = width / height
+    doc.close()
+    return aspect_ratio
+
 def embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, zoom_factor):
     slides_per_page=4
     output_doc = fitz.open()  # Create a new output document
@@ -76,6 +97,7 @@ def embed_slides_on_template(input_folder, output_folder, output_name, template_
     print(f"Compiled notes saved to {output_pdf_path}")
     os.startfile(output_pdf_path)
 
+"""
 def draw_grid_on_template(template_path, output_path, aspect_ratio):
     doc = fitz.open(template_path)
     page = doc[0]  # Assuming you want to draw on the first page
@@ -94,18 +116,18 @@ def draw_grid_on_template(template_path, output_path, aspect_ratio):
 
     doc.save(output_path)
     os.startfile(output_path)
+"""
 
 def main():
     parser = argparse.ArgumentParser(description="Embed slides into a custom template.")
     parser.add_argument("--name", type=str, default="output_notes.pdf", help="Name of the output PDF file (include .pdf extension)")
-    parser.add_argument("--zoom", type=float, default=1.0, help="Allows you to magnify slides, useful if slides contain an invisible border. e.g. 1.13")
+    parser.add_argument("--zoom", type=float, default=1, help="Insert the aspect ratio of your slides. Default is 4/3")
 
     args = parser.parse_args()
 
     output_name = args.name
     zoom = args.zoom
 
-    aspect_ratio = 4 / 3  # Default 4/3
     slides_per_page = 4  # Default 4
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -115,6 +137,8 @@ def main():
 
     ensure_directories_exist(input_folder, output_folder)
 
+    aspect_ratio = get_pdf_aspect_ratio(input_folder) # Default 4/3
+    
     x0 = 17.15
     y0 = 18.075
     square_length = 13.85
