@@ -48,8 +48,11 @@ def get_pdf_aspect_ratio(folder_path):
     doc.close()
     return aspect_ratio
 
-def embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, zoom_factor):
-    slides_per_page=4
+def embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, zoom_factor, both_sides = False):
+    if both_sides:
+        slides_per_page=8
+    else: 
+        slides_per_page=4
     output_doc = fitz.open()  # Create a new output document
     template_doc = fitz.open(template_path)  # Load the template document
 
@@ -87,7 +90,7 @@ def embed_slides_on_template(input_folder, output_folder, output_name, template_
 
 
                     output_page.show_pdf_page(zoomed_rect, doc, page_num)
-                    output_page.draw_rect(outline_rect, width=0.55)
+                    #output_page.draw_rect(outline_rect, width=0.55)
                     slide_count += 1
 
                 doc.close()
@@ -122,11 +125,12 @@ def main():
     parser = argparse.ArgumentParser(description="Embed slides into a custom template.")
     parser.add_argument("--name", type=str, default="output_notes.pdf", help="Name of the output PDF file (include .pdf extension)")
     parser.add_argument("--zoom", type=float, default=1, help="Insert the aspect ratio of your slides. Default is 4/3")
-
+    parser.add_argument("--both_sides", type=bool, default=False, help="True or False")
     args = parser.parse_args()
 
     output_name = args.name
     zoom = args.zoom
+    both_sides = args.both_sides
 
     slides_per_page = 4  # Default 4
 
@@ -138,23 +142,36 @@ def main():
     ensure_directories_exist(input_folder, output_folder)
 
     aspect_ratio = get_pdf_aspect_ratio(input_folder) # Default 4/3
-    
-    x0 = 17.15
+    #aspect_ratio = 4/3
+    template_doc = fitz.open(template_path)
+
+    x0_left = 17.15  # Left margin starting x-coordinate
     y0 = 18.075
     square_length = 13.85
     line_width = 0.55
     n_squares = 13
     add_y_pixels_slide = n_squares * square_length + (n_squares - 1) * line_width
+    x0_right = template_doc[0].rect.width - (x0_left + aspect_ratio * add_y_pixels_slide)
+
     y1 = y0 + add_y_pixels_slide + square_length + 2 * line_width
     y2 = y1 + add_y_pixels_slide + square_length + 2 * line_width
     y3 = y2 + add_y_pixels_slide + square_length + 2 * line_width
 
-    positions = [(x0, y0, x0 + aspect_ratio * add_y_pixels_slide, y0 + add_y_pixels_slide),
-                 (x0, y1, x0 + aspect_ratio * add_y_pixels_slide, y1 + add_y_pixels_slide),
-                 (x0, y2, x0 + aspect_ratio * add_y_pixels_slide, y2 + add_y_pixels_slide),
-                 (x0, y3, x0 + aspect_ratio * add_y_pixels_slide, y3 + add_y_pixels_slide)]
+    positions = [
+        (x0_left, y0, x0_left + aspect_ratio * add_y_pixels_slide, y0 + add_y_pixels_slide),  # Top-left
+        (x0_left, y1, x0_left + aspect_ratio * add_y_pixels_slide, y1 + add_y_pixels_slide),  # Middle-left
+        (x0_left, y2, x0_left + aspect_ratio * add_y_pixels_slide, y2 + add_y_pixels_slide),  # Bottom-left
+        (x0_left, y3, x0_left + aspect_ratio * add_y_pixels_slide, y3 + add_y_pixels_slide),  # Bottom-most left
+        (x0_right, y0, x0_right + aspect_ratio * add_y_pixels_slide, y0 + add_y_pixels_slide),  # Top-right
+        (x0_right, y1, x0_right + aspect_ratio * add_y_pixels_slide, y1 + add_y_pixels_slide),  # Middle-right
+        (x0_right, y2, x0_right + aspect_ratio * add_y_pixels_slide, y2 + add_y_pixels_slide),  # Bottom-right
+        (x0_right, y3, x0_right + aspect_ratio * add_y_pixels_slide, y3 + add_y_pixels_slide),  # Bottom-most right
+    ]
 
-    embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, zoom)
+    if not args.both_sides:
+        positions = positions[:4]
+        
+    embed_slides_on_template(input_folder, output_folder, output_name, template_path, positions, zoom, both_sides)
 
 if __name__ == "__main__":
     main()
